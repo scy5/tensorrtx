@@ -1,11 +1,16 @@
 # .trtx_yolov8m_pt2engine.sh a.pt 5
 
 if [ $# -ne 2 ]; then
-    echo "Usage: .trtx_yolov8m_pt2engine.sh a.pt 5 <pt_path> <class_num>"
+    echo "Usage: .trtx_yolov8m_pt2engine.sh a.pt <pt_path> <class_num>"
     exit 1
 fi
 
-pt_path=$1
+# 获取脚本所在的绝对路径
+script_path=$(cd "$(dirname "$0")" && pwd)
+echo "脚本所在路径: ${script_path}"
+trtx_path=${script_path}/..
+
+pt_path=$(realpath "$1")
 class_num=$2
 
 # 检查第一个参数是否是存在的文件
@@ -27,6 +32,7 @@ fi
 pt_name=$(basename "$pt_path" .pt)
 
 function modify_code() {
+	cd ${trtx_path}
 	sed -i "s/YoloLayer_TRT/Yolov8Layer_TRT/g" yolov8/src/block.cpp yolov8/plugin/yololayer.cu
 	sed -i -E "s/kNumClass = [0-9]+;/kNumClass = $class_num;/g" yolov8/include/config.h
 	sed -i "s/#define USE_FP16//g" yolov8/include/config.h
@@ -34,6 +40,7 @@ function modify_code() {
 }
 
 function generate_wts() {
+	cd ${trtx_path}
 	mkdir yolov8/build
 	cd yolov8/build
 	cmake ..
@@ -45,6 +52,7 @@ function generate_wts() {
 }
 
 function generate_engine() {
+	cd ${trtx_path}
 	out_path="out"
 	echo "-- mkdir $out_path"
 	mkdir "$out_path"
@@ -57,8 +65,8 @@ function generate_engine() {
 	# echo "$pt_path" | sed -n "s/abc.pt/_$gpu_model_$gpu_driver\.engine/g"
 	engine_name="${pt_name}_${gpu_model}_nv${gpu_driver}.engine"
 	
-	echo "-- ./yolov8/build/yolov8_det -s yolov8/build/$pt_name.wts $engine_name m"
-	./yolov8/build/yolov8_det -s yolov8/build/$pt_name.wts ${out_path}/$engine_name m
+	echo "-- ./yolov8/build/yolov8_det -s yolov8/build/$pt_name.wts $engine_name m $class_num"
+	./yolov8/build/yolov8_det -s yolov8/build/$pt_name.wts ${out_path}/$engine_name m $class_num
 	
 	if [ $? -ne 0 ]; then
 		echo "-- failed to generate ${out_path}/$engine_name"
@@ -68,6 +76,6 @@ function generate_engine() {
 	echo "-- ${out_path}/$engine_name is generated"
 }
 
-modify_code
+# modify_code
 generate_wts
 generate_engine

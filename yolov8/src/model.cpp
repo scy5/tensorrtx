@@ -6,6 +6,10 @@
 #include "config.h"
 #include "model.h"
 
+int model_set_class_num(int num) {
+    kNumClass = num;
+}
+
 static int get_width_5u(int x, float gw, int divisor = 8) {
     return int(ceil((x * gw) / divisor)) * divisor;
 }

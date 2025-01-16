@@ -144,7 +144,7 @@ void YoloLayerPlugin::detachFromContext() TRT_NOEXCEPT {}
 
 const char* YoloLayerPlugin::getPluginType() const TRT_NOEXCEPT {
 
-    return "YoloLayer_TRT";
+    return "Yolov8Layer_TRT";
 }
 
 const char* YoloLayerPlugin::getPluginVersion() const TRT_NOEXCEPT {
@@ -325,7 +325,7 @@ YoloPluginCreator::YoloPluginCreator() {
 }
 
 const char* YoloPluginCreator::getPluginName() const TRT_NOEXCEPT {
-    return "YoloLayer_TRT";
+    return "Yolov8Layer_TRT";
 }
 
 const char* YoloPluginCreator::getPluginVersion() const TRT_NOEXCEPT {

@@ -3,6 +3,8 @@
 #include <string>
 #include "NvInfer.h"
 
+int model_set_class_num(int num);
+
 nvinfer1::IHostMemory* buildEngineYolov8Det(nvinfer1::IBuilder* builder, nvinfer1::IBuilderConfig* config,
                                             nvinfer1::DataType dt, const std::string& wts_path, float& gd, float& gw,
                                             int& max_channels);

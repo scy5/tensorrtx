@@ -260,7 +260,7 @@ nvinfer1::IPluginV2Layer* addYoLoLayer(nvinfer1::INetworkDefinition* network,
                                        std::vector<nvinfer1::IConcatenationLayer*> dets, const int* px_arry,
                                        int px_arry_num, int num_class, bool is_segmentation, bool is_pose,
                                        bool is_obb) {
-    auto creator = getPluginRegistry()->getPluginCreator("YoloLayer_TRT", "1");
+    auto creator = getPluginRegistry()->getPluginCreator("Yolov8Layer_TRT", "1");
     const int netinfo_count = 9;  // Assuming the first 5 elements are for netinfo as per existing code.
     const int total_count = netinfo_count + px_arry_num;  // Total number of elements for netinfo and px_arry combined.
 
