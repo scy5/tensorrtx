@@ -33,6 +33,9 @@ else()
 
 endif()
 
+# 需要设定自己的链接地址
+link_directories(/home/aibox/TensorRT-8.5.1.7/lib)
+
 add_library(myplugins SHARED ${PROJECT_SOURCE_DIR}/plugin/yololayer.cu)
 target_link_libraries(myplugins nvinfer cudart)
 

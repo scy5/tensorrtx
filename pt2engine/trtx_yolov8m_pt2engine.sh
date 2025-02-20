@@ -58,7 +58,7 @@ function generate_engine() {
 	mkdir "$out_path"
 
 	# 获取显卡型号并提取“NVIDIA RTX”后面的部分
-	gpu_model=$(nvidia-smi --query-gpu=gpu_name --format=csv,noheader,nounits | head -n 1 | sed -n "s/.*NVIDIA RTX //p" | sed -n "s/ //p")
+	gpu_model=$(nvidia-smi --query-gpu=gpu_name --format=csv,noheader,nounits | head -n 1 | sed -n "s/.*NVIDIA RTX //p" | sed "s/ //g")
 	# 获取显卡驱动版本并提取主版本号（例如“550”）
 	gpu_driver=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader,nounits | head -n 1 | cut -d '.' -f 1)
 
