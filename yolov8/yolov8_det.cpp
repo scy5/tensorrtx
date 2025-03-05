@@ -156,10 +156,10 @@ bool parse_args(int argc, char** argv, std::string& wts, std::string& engine, in
             is_p = 2;
         }
 
-	int class_num = std::stoi(argv[5]);
-	if (class_num > 0) {
-	    model_set_class_num(class_num);
-	}
+        int class_num = std::stoi(argv[5]);
+        if (class_num > 0) {
+            model_set_class_num(class_num);
+        }
     } else if (std::string(argv[1]) == "-d" && argc == 5) {
         engine = std::string(argv[2]);
         img_dir = std::string(argv[3]);

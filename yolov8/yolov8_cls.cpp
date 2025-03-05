@@ -14,7 +14,7 @@
 using namespace nvinfer1;
 
 static Logger gLogger;
-const static int kOutputSize = kClsNumClass;
+// const static int kOutputSize = kClsNumClass;
 
 void batch_preprocess(std::vector<cv::Mat>& imgs, float* output, int dst_width=224, int dst_height=224) {
     for (size_t b = 0; b < imgs.size(); b++) {
@@ -93,7 +93,7 @@ std::vector<std::string> read_classes(std::string file_name) {
 
 bool parse_args(int argc, char** argv, std::string& wts, std::string& engine, float& gd, float& gw, std::string& img_dir) {
     if (argc < 4) return false;
-    if (std::string(argv[1]) == "-s" && (argc == 5)) {
+    if (std::string(argv[1]) == "-s" && (argc == 6)) {
         wts = std::string(argv[2]);
         engine = std::string(argv[3]);
         auto net = std::string(argv[4]);
@@ -115,6 +115,11 @@ bool parse_args(int argc, char** argv, std::string& wts, std::string& engine, fl
         }  else {
           return false;
         }
+
+        int class_num = std::stoi(argv[5]);
+        if (class_num > 0) {
+            model_set_class_num(class_num);
+        }
     } else if (std::string(argv[1]) == "-d" && argc == 4) {
         engine = std::string(argv[2]);
         img_dir = std::string(argv[3]);
@@ -134,16 +139,16 @@ void prepare_buffers(ICudaEngine* engine, float** gpu_input_buffer, float** gpu_
     assert(outputIndex == 1);
     // Create GPU buffers on device
     CUDA_CHECK(cudaMalloc((void**)gpu_input_buffer, kBatchSize * 3 * kClsInputH * kClsInputW * sizeof(float)));
-    CUDA_CHECK(cudaMalloc((void**)gpu_output_buffer, kBatchSize * kOutputSize * sizeof(float)));
+    CUDA_CHECK(cudaMalloc((void**)gpu_output_buffer, kBatchSize * kClsNumClass * sizeof(float)));
 
     *cpu_input_buffer = new float[kBatchSize * 3 * kClsInputH * kClsInputW];
-    *output_buffer_host = new float[kBatchSize * kOutputSize];
+    *output_buffer_host = new float[kBatchSize * kClsNumClass];
 }
 
 void infer(IExecutionContext& context, cudaStream_t& stream, void **buffers, float* input, float* output, int batchSize) {
     CUDA_CHECK(cudaMemcpyAsync(buffers[0], input, batchSize * 3 * kClsInputH * kClsInputW * sizeof(float), cudaMemcpyHostToDevice, stream));
     context.enqueue(batchSize, buffers, stream, nullptr);
-    CUDA_CHECK(cudaMemcpyAsync(output, buffers[1], batchSize * kOutputSize * sizeof(float), cudaMemcpyDeviceToHost, stream));
+    CUDA_CHECK(cudaMemcpyAsync(output, buffers[1], batchSize * kClsNumClass * sizeof(float), cudaMemcpyDeviceToHost, stream));
     cudaStreamSynchronize(stream);
 }
 
@@ -204,7 +209,7 @@ int main(int argc, char** argv) {
 
     if (!parse_args(argc, argv, wts_name, engine_name, gd, gw, img_dir)) {
         std::cerr << "arguments not right!" << std::endl;
-        std::cerr << "./yolov8_cls -s [.wts] [.engine] [n/s/m/l/x or c gd gw]  // serialize model to plan file" << std::endl;
+        std::cerr << "./yolov8_cls -s [.wts] [.engine] [n/s/m/l/x or c gd gw] [class_num] // serialize model to plan file" << std::endl;
         std::cerr << "./yolov8_cls -d [.engine] ../samples  // deserialize plan file and run inference" << std::endl;
         return -1;
     }
@@ -261,8 +266,8 @@ int main(int argc, char** argv) {
 
         // Postprocess and get top-k result
         for (size_t b = 0; b < img_name_batch.size(); b++) {
-            float* p = &output_buffer_host[b * kOutputSize];
-            auto res = softmax(p, kOutputSize);
+            float* p = &output_buffer_host[b * kClsNumClass];
+            auto res = softmax(p, kClsNumClass);
             auto topk_idx = topk(res, 3);
             std::cout << img_name_batch[b] << std::endl;
             for (auto idx: topk_idx) {

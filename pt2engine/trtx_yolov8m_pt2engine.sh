@@ -1,7 +1,8 @@
-# .trtx_yolov8m_pt2engine.sh a.pt 5
+#!/bin/bash
 
-if [ $# -ne 2 ]; then
-    echo "Usage: .trtx_yolov8m_pt2engine.sh a.pt <pt_path> <class_num>"
+# .trtx_yolov8m_pt2engine.sh a.pt 5
+if [ $# -ne 2 ] && [ $# -ne 3 ]; then
+    echo "Usage: .trtx_yolov8m_pt2engine.sh a.pt <pt_path> <class_num> <target(optional)>"
     exit 1
 fi
 
@@ -12,6 +13,11 @@ trtx_path=${script_path}/..
 
 pt_path=$(realpath "$1")
 class_num=$2
+if [ $# -eq 3 ]; then
+	target="$3"
+else
+	target="detect"
+fi
 
 # 检查第一个参数是否是存在的文件
 if [ -f "$pt_path" ]; then
@@ -47,8 +53,14 @@ function generate_wts() {
 	make
 
 	cd ../..
-	echo "-- python3 yolov8/gen_wts.py -w $pt_path -o yolov8/build/$pt_name.wts -t detect"
-	python3 yolov8/gen_wts.py -w $pt_path -o yolov8/build/$pt_name.wts -t detect
+
+	if [ "$target" = "cls" ]; then
+		echo "-- python3 yolov8/gen_wts.py -w $pt_path -o yolov8/build/$pt_name.wts -t cls"
+		python3 yolov8/gen_wts.py -w $pt_path -o yolov8/build/$pt_name.wts -t cls
+	else
+		echo "-- python3 yolov8/gen_wts.py -w $pt_path -o yolov8/build/$pt_name.wts -t detect"
+		python3 yolov8/gen_wts.py -w $pt_path -o yolov8/build/$pt_name.wts -t detect
+	fi
 }
 
 function generate_engine() {
@@ -64,15 +76,20 @@ function generate_engine() {
 
 	# echo "$pt_path" | sed -n "s/abc.pt/_$gpu_model_$gpu_driver\.engine/g"
 	engine_name="${pt_name}_${gpu_model}_nv${gpu_driver}.engine"
-	
-	echo "-- ./yolov8/build/yolov8_det -s yolov8/build/$pt_name.wts $engine_name m $class_num"
-	./yolov8/build/yolov8_det -s yolov8/build/$pt_name.wts ${out_path}/$engine_name m $class_num
-	
+
+	if [ "$target" = "cls" ]; then
+		echo "-- ./yolov8/build/yolov8_cls -s yolov8/build/$pt_name.wts $engine_name m $class_num"
+		./yolov8/build/yolov8_cls -s yolov8/build/$pt_name.wts ${out_path}/$engine_name m $class_num
+	else
+		echo "-- ./yolov8/build/yolov8_det -s yolov8/build/$pt_name.wts $engine_name m $class_num"
+		./yolov8/build/yolov8_det -s yolov8/build/$pt_name.wts ${out_path}/$engine_name m $class_num
+	fi
+
 	if [ $? -ne 0 ]; then
 		echo "-- failed to generate ${out_path}/$engine_name"
 		exit 1
 	fi
-	
+
 	echo "-- ${out_path}/$engine_name is generated"
 }
 

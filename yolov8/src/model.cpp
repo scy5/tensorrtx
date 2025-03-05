@@ -8,6 +8,7 @@
 
 int model_set_class_num(int num) {
     kNumClass = num;
+    kClsNumClass = num;
 }
 
 static int get_width_5u(int x, float gw, int divisor = 8) {
