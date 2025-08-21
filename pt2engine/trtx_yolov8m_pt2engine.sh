@@ -57,6 +57,9 @@ function generate_wts() {
 	if [ "$target" = "cls" ]; then
 		echo "-- python3 yolov8/gen_wts.py -w $pt_path -o yolov8/build/$pt_name.wts -t cls"
 		python3 yolov8/gen_wts.py -w $pt_path -o yolov8/build/$pt_name.wts -t cls
+	elif [ "$target" = "seg" ]; then
+		echo "-- python3 yolov8/gen_wts.py -w $pt_path -o yolov8/build/$pt_name.wts -t cls"
+		python3 yolov8/gen_wts.py -w $pt_path -o yolov8/build/$pt_name.wts -t seg
 	else
 		echo "-- python3 yolov8/gen_wts.py -w $pt_path -o yolov8/build/$pt_name.wts -t detect"
 		python3 yolov8/gen_wts.py -w $pt_path -o yolov8/build/$pt_name.wts -t detect
@@ -80,6 +83,9 @@ function generate_engine() {
 	if [ "$target" = "cls" ]; then
 		echo "-- ./yolov8/build/yolov8_cls -s yolov8/build/$pt_name.wts $engine_name m $class_num"
 		./yolov8/build/yolov8_cls -s yolov8/build/$pt_name.wts ${out_path}/$engine_name m $class_num
+	elif [ "$target" = "seg" ]; then
+		echo "-- ./yolov8/build/yolov8_cls -s yolov8/build/$pt_name.wts $engine_name m $class_num"
+		./yolov8/build/yolov8_seg -s yolov8/build/$pt_name.wts ${out_path}/$engine_name m $class_num
 	else
 		echo "-- ./yolov8/build/yolov8_det -s yolov8/build/$pt_name.wts $engine_name m $class_num"
 		./yolov8/build/yolov8_det -s yolov8/build/$pt_name.wts ${out_path}/$engine_name m $class_num

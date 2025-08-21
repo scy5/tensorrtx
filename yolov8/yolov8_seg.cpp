@@ -172,9 +172,9 @@ void infer(IExecutionContext& context, cudaStream_t& stream, void** buffers, flo
 bool parse_args(int argc, char** argv, std::string& wts, std::string& engine, std::string& img_dir,
                 std::string& sub_type, std::string& cuda_post_process, std::string& labels_filename, float& gd,
                 float& gw, int& max_channels) {
-    if (argc < 4)
+    if (argc < 5)
         return false;
-    if (std::string(argv[1]) == "-s" && argc == 5) {
+    if (std::string(argv[1]) == "-s" && argc == 6) {
         wts = std::string(argv[2]);
         engine = std::string(argv[3]);
         sub_type = std::string(argv[4]);
@@ -200,6 +200,10 @@ bool parse_args(int argc, char** argv, std::string& wts, std::string& engine, st
             max_channels = 640;
         } else {
             return false;
+        }
+        int class_num = std::stoi(argv[5]);
+        if (class_num > 0) {
+            model_set_class_num(class_num);
         }
     } else if (std::string(argv[1]) == "-d" && argc == 6) {
         engine = std::string(argv[2]);
