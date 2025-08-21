@@ -2,7 +2,7 @@
 
 # .trtx_yolov8m_pt2engine.sh a.pt 5
 if [ $# -ne 2 ] && [ $# -ne 3 ]; then
-    echo "Usage: .trtx_yolov8m_pt2engine.sh a.pt <pt_path> <class_num> <target(optional)>"
+    echo "Usage: .trtx_yolov8m_pt2engine.sh <pt_path> <class_num> <target(optional)>"
     exit 1
 fi
 
