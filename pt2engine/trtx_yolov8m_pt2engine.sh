@@ -51,22 +51,23 @@ else
     exit 1
 fi
 
+# 检查 input_size 并设置默认值
+if [ -z "$input_size" ]; then
+    input_size=640
+fi
+if [[ "$input_size" =~ ^[0-9]+$ ]]; then
+    echo "-- input size: $input_size"
+else
+    echo "-- invalid input size: $input_size"
+    exit 1
+fi
+
 # 检查 class_num 是否是数字
 if [[ "$class_num" =~ ^[0-9]+$ ]]; then
     echo "-- input class num: $class_num"
 else
     echo "-- invalid class num: $class_num"
     exit 1
-fi
-
-# 检查 input_size 是否是数字
-if [ -n "$input_size" ]; then
-    if [[ "$input_size" =~ ^[0-9]+$ ]]; then
-        echo "-- input size: $input_size"
-    else
-        echo "-- invalid input size: $input_size"
-        exit 1
-    fi
 fi
 
 pt_name=$(basename "$pt_path" .pt)
@@ -87,11 +88,9 @@ function modify_config() {
 	fi
 
 	# 输入尺寸设置
-	if [ -n "$input_size" ]; then
-		echo "-- setting input size to ${input_size}x${input_size}"
-		sed -i -E "s/kInputH = [0-9]+;/kInputH = $input_size;/g" yolov8/include/config.h
-		sed -i -E "s/kInputW = [0-9]+;/kInputW = $input_size;/g" yolov8/include/config.h
-	fi
+	echo "-- setting input size to ${input_size}x${input_size}"
+	sed -i -E "s/kInputH = [0-9]+;/kInputH = $input_size;/g" yolov8/include/config.h
+	sed -i -E "s/kInputW = [0-9]+;/kInputW = $input_size;/g" yolov8/include/config.h
 
 	# kNumClass 设置
 	sed -i -E "s/kNumClass = [0-9]+;/kNumClass = $class_num;/g" yolov8/include/config.h
