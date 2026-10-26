@@ -75,16 +75,33 @@ pt_name=$(basename "$pt_path" .pt)
 function modify_config() {
 	cd ${trtx_path}
 
-	# 精度宏设置
-	if [ "$precision_flag" = "fp32" ]; then
-		echo "-- switching to FP32 precision"
-		sed -i "s/#define USE_FP16/\/\/#define USE_FP16/g" yolov8/include/config.h
-		sed -i "s/\/\/#define USE_FP32/#define USE_FP32/g" yolov8/include/config.h
-	elif [ "$precision_flag" = "fp16" ]; then
-		echo "-- switching to FP16 precision"
-		sed -i "s/#define USE_FP32/\/\/#define USE_FP32/g" yolov8/include/config.h
-		sed -i "s/^#define USE_FP16/\/\/#define USE_FP16/g" yolov8/include/config.h
-		sed -i "s/\/\/#define USE_FP16/#define USE_FP16/g" yolov8/include/config.h
+	# 精度宏设置：归一化已有注释，重复执行不会累加 //。
+	if [ "$precision_flag" = "fp32" ] || [ "$precision_flag" = "fp16" ]; then
+		local config_file="yolov8/include/config.h"
+		local selected_macro="USE_${precision_flag^^}"
+		local disabled_macro
+		if [ "$precision_flag" = "fp32" ]; then
+			disabled_macro="USE_FP16"
+		else
+			disabled_macro="USE_FP32"
+		fi
+
+		echo "-- switching to ${precision_flag^^} precision"
+		# 一次完成两个宏的归一化，支持多层行注释并保留行尾内容。
+		if ! sed -i -E \
+			-e "s|^[[:space:]]*(//[[:space:]]*)*#[[:space:]]*define[[:space:]]+${selected_macro}([[:space:]].*)?$|#define ${selected_macro}\\2|" \
+			-e "s|^[[:space:]]*(//[[:space:]]*)*#[[:space:]]*define[[:space:]]+${disabled_macro}([[:space:]].*)?$|//#define ${disabled_macro}\\2|" \
+			"$config_file"; then
+			echo "-- failed to update precision macros in $config_file" >&2
+			exit 1
+		fi
+
+		# 缺失或重复定义都视为异常，阻止后续编译。
+		if [ "$(grep -Ec "^#define ${selected_macro}([[:space:]]|$)" "$config_file")" != "1" ] || \
+		   [ "$(grep -Ec "^//#define ${disabled_macro}([[:space:]]|$)" "$config_file")" != "1" ]; then
+			echo "-- invalid precision macros in $config_file" >&2
+			exit 1
+		fi
 	fi
 
 	# 输入尺寸设置
