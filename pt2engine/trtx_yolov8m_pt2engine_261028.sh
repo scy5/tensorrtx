@@ -1,12 +1,16 @@
 #!/bin/bash
 
 # 用法:
-#   ./trtx_yolov8m_pt2engine.sh [-fp32|-fp16] [-inputsize=N] <pt_path> <class_num> [target]
+#   ./trtx_yolov8m_pt2engine.sh [-fp32|-fp16] [-inputsize=N] [-inputw=W] [-inputh=H] <pt_path> <class_num> [target]
+# 默认高×宽为 384×640；-inputsize 设置正方形尺寸，-inputw/-inputh 优先覆盖对应维度。
 # 示例:
 #   ./trtx_yolov8m_pt2engine.sh -fp16 -inputsize=320 a.pt 80 detect
+#   ./trtx_yolov8m_pt2engine.sh -fp16 -inputw=640 -inputh=384 a.pt 80 detect
 
 precision_flag=""
 input_size=""
+input_w=""
+input_h=""
 
 # 解析参数：分离可选 flag 和位置参数
 positional_args=()
@@ -18,6 +22,12 @@ for arg in "$@"; do
         -inputsize=*)
             input_size="${arg#*=}"
             ;;
+        -inputw=*)
+            input_w="${arg#*=}"
+            ;;
+        -inputh=*)
+            input_h="${arg#*=}"
+            ;;
         *)
             positional_args+=("$arg")
             ;;
@@ -26,7 +36,7 @@ done
 
 # 位置参数校验
 if [ ${#positional_args[@]} -lt 2 ] || [ ${#positional_args[@]} -gt 3 ]; then
-    echo "Usage: $0 [-fp32|-fp16] [-inputsize=N] <pt_path> <class_num> [target]"
+    echo "Usage: $0 [-fp32|-fp16] [-inputsize=N] [-inputw=W] [-inputh=H] <pt_path> <class_num> [target]"
     exit 1
 fi
 
@@ -51,14 +61,14 @@ else
     exit 1
 fi
 
-# 检查 input_size 并设置默认值
-if [ -z "$input_size" ]; then
-    input_size=640
-fi
-if [[ "$input_size" =~ ^[0-9]+$ ]]; then
-    echo "-- input size: $input_size"
+# 分别设置宽高；独立维度参数优先于兼容的正方形尺寸参数。
+input_w="${input_w:-${input_size:-640}}"
+input_h="${input_h:-${input_size:-384}}"
+if [[ "$input_w" =~ ^[0-9]+$ && "$input_w" =~ [1-9] &&
+      "$input_h" =~ ^[0-9]+$ && "$input_h" =~ [1-9] ]]; then
+    echo "-- input size (HxW): ${input_h}x${input_w}"
 else
-    echo "-- invalid input size: $input_size"
+    echo "-- invalid input size (HxW): ${input_h}x${input_w}; dimensions must be positive integers"
     exit 1
 fi
 
@@ -105,9 +115,9 @@ function modify_config() {
 	fi
 
 	# 输入尺寸设置
-	echo "-- setting input size to ${input_size}x${input_size}"
-	sed -i -E "s/kInputH = [0-9]+;/kInputH = $input_size;/g" yolov8/include/config.h
-	sed -i -E "s/kInputW = [0-9]+;/kInputW = $input_size;/g" yolov8/include/config.h
+	echo "-- setting input size (HxW) to ${input_h}x${input_w}"
+	sed -i -E "s/kInputH = [0-9]+;/kInputH = $input_h;/g" yolov8/include/config.h
+	sed -i -E "s/kInputW = [0-9]+;/kInputW = $input_w;/g" yolov8/include/config.h
 
 	# kNumClass 设置
 	sed -i -E "s/kNumClass = [0-9]+;/kNumClass = $class_num;/g" yolov8/include/config.h
