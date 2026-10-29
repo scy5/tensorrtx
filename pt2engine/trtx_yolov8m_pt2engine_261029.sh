@@ -2,7 +2,8 @@
 
 # 用法:
 #   ./trtx_yolov8m_pt2engine.sh [-fp32|-fp16] [-inputsize=N] [-inputw=W] [-inputh=H] <pt_path> <class_num> [target]
-# 默认高×宽为 384×640；-inputsize 设置正方形尺寸，-inputw/-inputh 优先覆盖对应维度。
+# 检测模型默认高×宽为 384×640，seg/cls 默认 640×640。
+# -inputsize 设置正方形尺寸，-inputw/-inputh 优先覆盖对应维度。
 # 示例:
 #   ./trtx_yolov8m_pt2engine.sh -fp16 -inputsize=320 a.pt 80 detect
 #   ./trtx_yolov8m_pt2engine.sh -fp16 -inputw=640 -inputh=384 a.pt 80 detect
@@ -62,8 +63,12 @@ else
 fi
 
 # 分别设置宽高；独立维度参数优先于兼容的正方形尺寸参数。
+default_h=640
+if [ "$target" = "detect" ] || [ "$target" = "det" ]; then
+    default_h=384
+fi
 input_w="${input_w:-${input_size:-640}}"
-input_h="${input_h:-${input_size:-384}}"
+input_h="${input_h:-${input_size:-$default_h}}"
 if [[ "$input_w" =~ ^[0-9]+$ && "$input_w" =~ [1-9] &&
       "$input_h" =~ ^[0-9]+$ && "$input_h" =~ [1-9] ]]; then
     echo "-- input size (HxW): ${input_h}x${input_w}"
