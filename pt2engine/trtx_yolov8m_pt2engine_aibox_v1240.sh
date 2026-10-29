@@ -160,7 +160,7 @@ function generate_engine() {
 	# 获取显卡驱动版本并提取主版本号
 	gpu_driver=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader,nounits | head -n 1 | cut -d '.' -f 1)
 
-	engine_name="${pt_name}_${gpu_model}_nv${gpu_driver}.engine"
+	engine_name="${pt_name}_${gpu_model}_nv${gpu_driver}_v1240.engine"
 
 	if [ "$target" = "cls" ]; then
 		echo "-- ./yolov8/build/yolov8_cls -s yolov8/build/$pt_name.wts $engine_name m $class_num"
